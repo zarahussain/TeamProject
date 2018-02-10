@@ -27,7 +27,11 @@ namespace AdventureWorks
          // adding db context to DI
          services.AddDbContext<AdventureWorksContext>();
          // adding MVC
-         services.AddMvc();
+         services.AddMvc()
+                 .AddJsonOptions(options =>
+                  {
+                     options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore;
+                  });
       }
 
       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -42,7 +46,7 @@ namespace AdventureWorks
          // using static files with default files
          app.UseFileServer();
          // using mvc
-         app.UseMvc();
+         app.UseMvcWithDefaultRoute();
 
          app.Run(async (context) =>
          {

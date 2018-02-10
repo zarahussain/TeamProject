@@ -47,3 +47,4 @@ _ReSharper*/
 
 # vscode files
 .vscode/
+bin/Debug/netcoreapp2.0/AdventureWorks.dll
