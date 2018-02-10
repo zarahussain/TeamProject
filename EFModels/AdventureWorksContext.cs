@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 
-namespace AdventureWorks.EFModels
+namespace AdventureWorks
 {
     public partial class AdventureWorksContext : DbContext
     {

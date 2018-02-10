@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 
-namespace AdventureWorks.EFModels
+namespace AdventureWorks
 {
     public partial class TransactionHistoryArchive
     {
