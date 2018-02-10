@@ -1,11 +1,18 @@
 ﻿using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.Extensions.Options;
+using static AdventureWorks.Startup;
 
 namespace AdventureWorks
 {
     public partial class AdventureWorksContext : DbContext
     {
+        public string ConStr { get; }
+        public AdventureWorksContext(IOptions<AppSettings> settings)
+        {
+           ConStr = settings.Value.SqlServerConnection;
+        }
         public virtual DbSet<Address> Address { get; set; }
         public virtual DbSet<AddressType> AddressType { get; set; }
         public virtual DbSet<AwbuildVersion> AwbuildVersion { get; set; }
@@ -77,12 +84,11 @@ namespace AdventureWorks
         public virtual DbSet<WorkOrder> WorkOrder { get; set; }
         public virtual DbSet<WorkOrderRouting> WorkOrderRouting { get; set; }
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+      protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
             {
-#warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer(@"Server=.;Database=AdventureWorks;Integrated Security=true;");
+                optionsBuilder.UseSqlServer(ConStr);
             }
         }
 
