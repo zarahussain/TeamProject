@@ -26,6 +26,8 @@ namespace AdventureWorks
          services.Configure<AppSettings>(Config.GetSection("AppSettings"));
          // adding db context to DI
          services.AddDbContext<AdventureWorksContext>();
+         // adding MVC
+         services.AddMvc();
       }
 
       // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -37,6 +39,10 @@ namespace AdventureWorks
          {
             app.UseDeveloperExceptionPage();
          }
+         // using static files with default files
+         app.UseFileServer();
+         // using mvc
+         app.UseMvc();
 
          app.Run(async (context) =>
          {
