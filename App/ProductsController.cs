@@ -44,14 +44,20 @@ namespace AdventureWorks
         // GET: api/Products/find?
         [HttpGet("find")]
         public async Task<IActionResult> Find([FromQuery] IDictionary<string,string> query) {
-            string sql = "select * from Production.Product where ";
-            foreach (string key in query.Keys) {
-                if(query.Keys.First() == key)
-                    sql += $"{key.Substring(0,1).ToString().ToUpper()+key.Substring(1)} = '{query[key]}'";
+            string sql = "select * from Production.Product";
+            List<string> fields = query.Keys.Select(key => key.Substring(0,1).ToString().ToUpper()+key.Substring(1)).ToList();
+            List<string> values = query.Keys.Select(key => query[key]).ToList();
+            for (int i = 0; i < fields.Count; i++) {
+                if(i==0)
+                    sql += $" where {fields[i]} = '{values[i]}'";
                 else
-                    sql += $" and {key.Substring(0,1).ToString().ToUpper()+key.Substring(1)} = '{query[key]}'";
+                    sql += $" and {fields[i]} = '{values[i]}'";
             }
-            return Ok(await _context.Product.FromSql(sql).ToListAsync());
+            var result = await _context.Product.FromSql(sql).ToListAsync();
+            if(result.Count > 0)
+                return Ok(result);
+            else
+                return NotFound();
         }
     }
 }
