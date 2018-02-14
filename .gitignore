@@ -48,3 +48,12 @@ _ReSharper*/
 # vscode files
 .vscode/
 bin/Debug/netcoreapp2.0/AdventureWorks.dll
+obj/Debug/netcoreapp2.0/AdventureWorks.csproj.FileListAbsolute.txt
+bin/Debug/netcoreapp2.0/AdventureWorks.dll
+bin/Debug/netcoreapp2.0/AdventureWorks.pdb
+obj/AdventureWorks.csproj.nuget.cache
+obj/AdventureWorks.csproj.nuget.g.props
+obj/project.assets.json
+obj/Debug/netcoreapp2.0/AdventureWorks.dll
+obj/Debug/netcoreapp2.0/AdventureWorks.pdb
+obj/Debug/netcoreapp2.0/AdventureWorks.csproj.CoreCompileInputs.cache
