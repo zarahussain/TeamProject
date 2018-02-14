@@ -4,7 +4,7 @@ using System.Linq;
 
 namespace AdventureWorks
 {
-   public class Paging
+   public class Page
     {
         public int number { get; set; } = 1;
         public int size { get; set; } = 10;

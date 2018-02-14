@@ -24,7 +24,7 @@ namespace AdventureWorks
 
         // GET: api/Products/paging?number=1&size=10
         [HttpGet("paging")]
-        public IActionResult GetPaged([FromQuery] Paging page) =>
+        public IActionResult GetPaged([FromQuery] Page page) =>
             Ok(new PagedList<Product>(_context.Product.AsQueryable(), page.number, page.size));
 
         // GET: api/Products/5
