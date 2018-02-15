@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
@@ -16,6 +17,36 @@ namespace AdventureWorks
           _context = context;
       private bool ProductExists(int id) =>
           _context.Product.Any(e => e.ProductId == id);
+      private async Task<IActionResult> DoAction(Product entity, string actionType)
+      {
+         if (ModelState.IsValid) {
+             if(actionType == "Modified")
+                entity.ModifiedDate = DateTime.Now;
+            _context.SetState<Product>(entity, actionType);
+            try
+            {
+               await _context.SaveChangesAsync();
+               switch (actionType)
+               {
+                  case "Added":
+                     return Created($"api/Products/{entity.ProductId}", entity);
+                  case "Modified":
+                     return Ok(entity);
+                  case "Deleted":
+                     return Ok(new { Message = $"Item with Id: {entity.ProductId} Was Deleted From DB" });
+                  default:
+                     return NoContent();
+               }
+            }
+            catch (Exception ex)
+            {
+               return BadRequest(new { Title = "SqlException", Error = ex.InnerException.Message });
+            }
+         }
+         else {
+            return BadRequest(new { Title = "Invalid Data", Error = ModelState });
+         }
+      }
 
       // GET: api/Products/list
       [HttpGet("list")]
@@ -33,13 +64,7 @@ namespace AdventureWorks
       {
          if (!ProductExists(id))
             return NotFound();
-         var product = await _context.Product
-             .Include(p => p.ProductModel)
-             .Include(p => p.ProductSubcategory)
-             .Include(p => p.SizeUnitMeasureCodeNavigation)
-             .Include(p => p.WeightUnitMeasureCodeNavigation)
-             .SingleOrDefaultAsync(m => m.ProductId == id);
-         return Ok(product);
+         return Ok(await _context.Product.FindAsync(id));
       }
 
       // GET: api/Products/find?
@@ -70,18 +95,24 @@ namespace AdventureWorks
       [HttpPost("add")]
       public async Task<IActionResult> Add([FromBody] Product newProduct)
       {
-          if(ModelState.IsValid) {
-              _context.SetState<Product>(newProduct, "Added");
-              try {
-                  await _context.SaveChangesAsync();
-                  return Created($"api/Products/{newProduct.ProductId}",newProduct);
-              } catch(Exception ex) {
-                  return BadRequest(new { Title = "SqlException", Error = ex.InnerException.Message });
-              }
-          }
-          else {
-              return BadRequest(new { Title = "Invalid Data", Error = ModelState});
-          }
+         return await DoAction(newProduct, "Added");
+      }
+
+      // POST: api/Products/update
+      [HttpPut("update")]
+      public async Task<IActionResult> Update([FromBody] Product updProduct)
+      {
+         return await DoAction(updProduct, "Modified");
+      }
+
+      // POST: api/Products/delete
+      [HttpDelete("delete/{id}")]
+      public async Task<IActionResult> Delete([FromRoute] int id)
+      {
+         if (!ProductExists(id))
+            return NotFound();
+         var toDelProduct = _context.Product.Find(id);
+         return await DoAction(toDelProduct, "Deleted");
       }
    }
 }
