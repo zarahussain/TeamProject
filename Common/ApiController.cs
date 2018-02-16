@@ -9,37 +9,40 @@ using System.Threading.Tasks;
 
 namespace AdventureWorks
 {
+  public class AdvSearch {
+    public string SqlTableName { get; set; }
+    public string KeyPropName { get; set; }
+    public PropertyInfo KeyProp { get; set; }
+    public List<string> QuerableFields { get; set; }
+  }
+  public class Response {
+    public string Title { get; set; }
+    public object Message { get; set; }
+  }
   public class APIController<Tkey, TEntity, TDbContext> : Controller
           where Tkey : struct
           where TEntity : class
           where TDbContext : DbContext
   {
     private readonly TDbContext _db;
-    private readonly PropertyInfo _keyProp;
-    private readonly string _tblName;
-    private readonly List<string> _querable;
+    private readonly AdvSearch _advSearch;
     private IEnumerable<dynamic> _filters;
-    private string _sqlQuery;
     private TEntity found;
-
     private PropertyInfo _modifiedDateProp;
+    private string _sqlQuery;
 
-    public APIController(TDbContext dbContext,
-                          string keyPropName,
-                          string sqlTableName,
-                          List<string> querableFields)
+    public APIController(TDbContext dbContext, AdvSearch advSearch)
     {
       _db = dbContext;
-      _keyProp = typeof(TEntity).GetProperty(keyPropName);
-      _tblName = sqlTableName;
-      _querable = querableFields;
+      _advSearch = advSearch;
+      _advSearch.KeyProp = typeof(TEntity).GetProperty(_advSearch.KeyPropName);
     }
 
-    private bool FieldExists(string FieldName) => _querable.Any(q => q == FieldName);
+    private bool FieldExists(string FieldName) => _advSearch.QuerableFields.Any(q => q == FieldName);
 
     private async Task<TEntity> Find(Tkey id) => await _db.Set<TEntity>()
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(e => _keyProp.GetValue(e).Equals(id));
+                        .FirstOrDefaultAsync(e => _advSearch.KeyProp.GetValue(e).Equals(id));
     private void SetState(TEntity entity, string _state)
     {
       EntityState state;
@@ -72,21 +75,24 @@ namespace AdventureWorks
           await _db.SaveChangesAsync();
           switch (actionType) {
             case "Added":
-              return Created($"api/Products/{_keyProp.GetValue(entity)}", entity);
+              return Created($"api/Products/{_advSearch.KeyProp.GetValue(entity)}", entity);
             case "Modified":
               return Ok(entity);
             case "Deleted":
-              return Ok(new { Message = $"Item with Id: {_keyProp.GetValue(entity)} Was Deleted From DB" });
+              return Ok(new Response { Title = "Success: Deleting",
+                                       Message = $"Item with Id: {_advSearch.KeyProp.GetValue(entity)} Was Deleted From DB" });
             default:
               return NoContent();
           }
         }
         catch (Exception ex) {
-          return BadRequest(new { Title = "SqlException", Error = ex.InnerException.Message });
+          return BadRequest(new Response {  Title = "Error: SqlException",
+                                            Message = ex.InnerException.Message });
         }
       }
       else {
-        return BadRequest(new { Title = "Invalid Data", Error = ModelState });
+        return BadRequest(new Response {  Title = "Error: Invalid Data",
+                                          Message = ModelState });
       }
     }
 
@@ -121,7 +127,7 @@ namespace AdventureWorks
       if (_filters.Count() == 0)
         return BadRequest(new { Title = "Invalid QueryString Keys", Error = query });
       // set the base select statement
-      _sqlQuery = $"select * from {_tblName}";
+      _sqlQuery = $"select * from {_advSearch.SqlTableName}";
       // build the where clause
       foreach (var item in _filters) {
         if (item.Field == _filters.First().Field)
@@ -162,5 +168,5 @@ namespace AdventureWorks
       return await DoAction(found, "Deleted");
     }
 
-  } // class
+  } // end class APIController
 } // namespace
