@@ -1,7 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 
-namespace 
-AdventureWorks
+namespace AdventureWorks
 {
    public static class Extensions
    {
