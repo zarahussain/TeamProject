@@ -1,27 +1,79 @@
+using System;
+using System.Linq;
+using System.Reflection;
+using System.Collections.Generic;
+using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
 
 namespace AdventureWorks
 {
-   public static class Extensions
-   {
-      public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
+  public static class Extensions
+  {
+    // failed to handle async and multiple sotring
+    public static IEnumerable<T> Sort<T>(this IEnumerable<T> query, string sort)
+    {
+      // hold the sorting result;
+      IOrderedEnumerable<T> orderedQuery = null;
+      // hold the sorting expression
+      Func<T, object> expression;
+      // split comma separated list into string array
+      string[] items = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
+      // hold the sorting pair string array
+      string[] pair = new string[] { };
+      // hold the sorting direction
+      string dir = null;
+      // hold the sorting property
+      string prop = null;
+
+      // lets build the ordered expression from sort array
+      for (int i = 0; i < items.Length; i++)
       {
-         EntityState state;
-         switch (_state) {
-            case "Added":
-               state = EntityState.Added;
-               break;
-            case "Modified":
-               state = EntityState.Modified;
-               break;
-            case "Deleted":
-               state = EntityState.Deleted;
-               break;
-            default:
-               state = EntityState.Unchanged;
-               break;
-         }
-         context.Entry(entity).State = state;
+        pair = items[i].Trim().Split(' ');
+        if (pair.Length > 2)
+          throw new ArgumentException(String.Format("Invalid OrderBy string '{0}'. Order By Format: Property, Property2 asc, Property2 desc", items[i]));
+
+        prop = pair[0].Trim();
+        if (String.IsNullOrEmpty(prop))
+          throw new ArgumentException("Invalid Property. Order By Format: Property, Property2 asc, Property3 desc");
+
+        if (pair.Length == 2)
+          dir = pair[1].Trim();
+
+        if (String.IsNullOrEmpty(dir))
+          dir = "asc";
+
+        // Let us sort it
+        expression = item => typeof(T)
+                        .GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)
+                        .GetValue(item);
+
+        if (dir == "asc")
+          orderedQuery = (i == 0) ? query.OrderBy(expression) : orderedQuery.ThenBy(expression);
+        else
+          orderedQuery = (i == 0) ? query.OrderByDescending(expression) : orderedQuery.ThenByDescending(expression);
       }
-   }
+
+      return orderedQuery;
+    }
+    public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
+    {
+      EntityState state;
+      switch (_state)
+      {
+        case "Added":
+          state = EntityState.Added;
+          break;
+        case "Modified":
+          state = EntityState.Modified;
+          break;
+        case "Deleted":
+          state = EntityState.Deleted;
+          break;
+        default:
+          state = EntityState.Unchanged;
+          break;
+      }
+      context.Entry(entity).State = state;
+    }
+  }
 }
