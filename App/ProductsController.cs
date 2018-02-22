@@ -76,14 +76,10 @@ namespace AdventureWorks
     {
       if (String.IsNullOrEmpty(orderBy))
         return Ok(await _context.Product.ToListAsync());
-      string[] items = orderBy.Split(',', StringSplitOptions.RemoveEmptyEntries);
-      items = items.Select(i => i.Substring(0,1).ToUpper()+i.Substring(1)).ToArray();
       try {
-        // var result = _context.Product
-        //                             .AsNoTracking()
-        //                             .Sort(orderBy)
-        //                             .ToList();
-        var result = await _context.Product.OrderBy(string.Join(",", items)).ToListAsync();
+        var result = await _context.Product
+                                .OrderBy(orderBy)
+                                .ToListAsync();
         return Ok(result);
       }
       catch (Exception ex) {
