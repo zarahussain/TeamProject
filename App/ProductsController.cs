@@ -80,6 +80,9 @@ namespace AdventureWorks
         var result = await _context.Product
                                 .OrderBy(orderBy)
                                 .ToListAsync();
+        // var result = _context.Product
+        //                 .Sort(orderBy)
+        //                 .ToList();
         return Ok(result);
       }
       catch (Exception ex) {
