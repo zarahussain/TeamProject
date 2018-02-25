@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
+using System.Dynamic;
 
 namespace AdventureWorks
 {
@@ -52,6 +53,86 @@ namespace AdventureWorks
       }
     }
 
+    [HttpGet("sort")]
+    public async Task<IActionResult> sort([FromQuery] string orderBy)
+    {
+      if (String.IsNullOrEmpty(orderBy))
+        return Ok(await _context.Product.ToListAsync());
+      try {
+        var result = await _context.Product
+                                .OrderBy(orderBy)
+                                .ToListAsync();
+        return Ok(result);
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
+      }
+
+    }
+
+    [HttpGet("sql")]
+    public async Task<IActionResult> sql([FromQuery] string sql)
+    {
+      try {
+        var result = await _context.Product
+                                .FromSql(sql)
+                                .ToListAsync();
+        return Ok(result);
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
+      }
+
+    }
+
+    [HttpGet("shapping")]
+    public IActionResult shapping([FromQuery] string fields)
+    {
+      try {
+        string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
+                                       .ToArray();
+
+        IDictionary<string,object> shapped;
+        List<IDictionary<string,object>> result = new List<IDictionary<string, object>>();
+
+        foreach (var entity in _context.Product) {
+          shapped = new ExpandoObject();
+          foreach (var prop in Props)
+            shapped.Add(prop.Name,prop.GetValue(entity));
+
+          result.Add(shapped);
+        }
+
+        return Ok( result );
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+      }
+    }
+
+    [HttpGet("orderBy")]
+    public IActionResult orderBy([FromQuery] string fields)
+    {
+      string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+
+      try {
+      PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) ).ToArray();
+
+      var query = _context.Product
+                          .AsNoTracking()
+                          .OrderBy(p => Props.First().GetValue(p));
+
+      for (int i = 1; i < Props.Count(); i++)
+        query = query.ThenBy(p => Props[i].GetValue(p));
+
+        return Ok( query.ToList() );
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+      }
+    }
+
     // GET: api/Products?
     [HttpGet("filter")]
     public async Task<IActionResult> Filter([FromQuery] IDictionary<string, string> qStr)
@@ -69,26 +150,6 @@ namespace AdventureWorks
         return Ok(result);
       else
         return NotFound();
-    }
-
-    [HttpGet()]
-    public async Task<IActionResult> sort([FromQuery] string orderBy)
-    {
-      if (String.IsNullOrEmpty(orderBy))
-        return Ok(await _context.Product.ToListAsync());
-      try {
-        var result = await _context.Product
-                                .OrderBy(orderBy)
-                                .ToListAsync();
-        // var result = _context.Product
-        //                 .Sort(orderBy)
-        //                 .ToList();
-        return Ok(result);
-      }
-      catch (Exception ex) {
-        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
-      }
-
     }
 
     // GET: api/Products/list

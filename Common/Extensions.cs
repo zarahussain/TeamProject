@@ -9,13 +9,11 @@ namespace AdventureWorks
 {
   public static class Extensions
   {
-    // failed to handle async and multiple sotring
-    public static IEnumerable<T> Sort<T>(this IEnumerable<T> query, string sort)
+    // failed to handle async and sotring
+    public static IQueryable<T> Sort<T>(this IQueryable<T> query, string sort)
     {
-      // hold the sorting result;
-      IOrderedEnumerable<T> orderedQuery = null;
       // hold the sorting expression
-      Func<T, object> expression;
+      Expression<Func<T, object>> expression;
       // split comma separated list into string array
       string[] items = sort.Split(',', StringSplitOptions.RemoveEmptyEntries);
       // hold the sorting pair string array
@@ -47,13 +45,17 @@ namespace AdventureWorks
                         .GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)
                         .GetValue(item);
 
-        if (dir == "asc")
-          orderedQuery = (i == 0) ? query.OrderBy(expression) : orderedQuery.ThenBy(expression);
+        if (i == 0)
+          query = (dir == "asc")
+          ? query.OrderBy(expression)
+          : query.OrderByDescending(expression);
         else
-          orderedQuery = (i == 0) ? query.OrderByDescending(expression) : orderedQuery.ThenByDescending(expression);
+          query = (dir == "asc")
+          ? (query as IOrderedQueryable<T>).ThenBy(expression)
+          : (query as IOrderedQueryable<T>).ThenByDescending(expression);
       }
 
-      return orderedQuery;
+      return query;
     }
     public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
     {
