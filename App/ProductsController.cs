@@ -70,21 +70,6 @@ namespace AdventureWorks
 
     }
 
-    [HttpGet("sql")]
-    public async Task<IActionResult> sql([FromQuery] string sql)
-    {
-      try {
-        var result = await _context.Product
-                                .FromSql(sql)
-                                .ToListAsync();
-        return Ok(result);
-      }
-      catch (Exception ex) {
-        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
-      }
-
-    }
-
     [HttpGet("shapping")]
     public IActionResult shapping([FromQuery] string fields)
     {
@@ -112,21 +97,23 @@ namespace AdventureWorks
     }
 
     [HttpGet("orderBy")]
-    public IActionResult orderBy([FromQuery] string fields)
+    public async Task<IActionResult> orderBy([FromQuery] string fields)
     {
-      string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
-
       try {
-      PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) ).ToArray();
-
-      var query = _context.Product
+        // string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        // List<PropertyInfo> Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
+        //                                 .ToList();
+        // var query = _context.Product
+        //                   .AsNoTracking()
+        //                   .OrderBy(p => Props.First().GetValue(p));
+        // int len = Props.Count;
+        // if(len>1)
+        //   for (int i = 1; i < len; i++)
+        //     query = query.ThenBy(p => Props[i].GetValue(p));
+        var query = _context.Product
                           .AsNoTracking()
-                          .OrderBy(p => Props.First().GetValue(p));
-
-      for (int i = 1; i < Props.Count(); i++)
-        query = query.ThenBy(p => Props[i].GetValue(p));
-
-        return Ok( query.ToList() );
+                          .OrderBy(fields);
+        return Ok( await query.ToListAsync() );
       }
       catch (Exception ex) {
         return BadRequest(new { Title = ex.GetType().Name, Error = ex });
@@ -150,6 +137,21 @@ namespace AdventureWorks
         return Ok(result);
       else
         return NotFound();
+    }
+
+    [HttpGet("sql")]
+    public async Task<IActionResult> sql([FromQuery] string sql)
+    {
+      try {
+        var result = await _context.Product
+                                .FromSql(sql)
+                                .ToListAsync();
+        return Ok(result);
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
+      }
+
     }
 
     // GET: api/Products/list
