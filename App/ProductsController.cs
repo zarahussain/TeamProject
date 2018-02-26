@@ -54,7 +54,7 @@ namespace AdventureWorks
     }
 
     [HttpGet("sort")]
-    public async Task<IActionResult> sort([FromQuery] string orderBy)
+    public async Task<IActionResult> Sort([FromQuery] string orderBy)
     {
       if (String.IsNullOrEmpty(orderBy))
         return Ok(await _context.Product.ToListAsync());
@@ -96,30 +96,6 @@ namespace AdventureWorks
       }
     }
 
-    [HttpGet("orderBy")]
-    public async Task<IActionResult> orderBy([FromQuery] string fields)
-    {
-      try {
-        // string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        // List<PropertyInfo> Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
-        //                                 .ToList();
-        // var query = _context.Product
-        //                   .AsNoTracking()
-        //                   .OrderBy(p => Props.First().GetValue(p));
-        // int len = Props.Count;
-        // if(len>1)
-        //   for (int i = 1; i < len; i++)
-        //     query = query.ThenBy(p => Props[i].GetValue(p));
-        var query = _context.Product
-                          .AsNoTracking()
-                          .OrderBy(fields);
-        return Ok( await query.ToListAsync() );
-      }
-      catch (Exception ex) {
-        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
-      }
-    }
-
     // GET: api/Products?
     [HttpGet("filter")]
     public async Task<IActionResult> Filter([FromQuery] IDictionary<string, string> qStr)
@@ -139,8 +115,55 @@ namespace AdventureWorks
         return NotFound();
     }
 
+    // GET: api/Products/find?
+    [HttpGet("find")]
+    public async Task<IActionResult> Find([FromQuery] IDictionary<string, string> query)
+    {
+      var filters = query.Select(item => new
+      {
+        Field = item.Key.Substring(0, 1).ToString().ToUpper() + item.Key.Substring(1),
+        Value = item.Value
+      });
+      string sql = "select * from Production.Product";
+      foreach (var item in filters) {
+        if (item.Field == filters.First().Field)
+          sql += $" where {item.Field} = '{item.Value}'";
+        else
+          sql += $" and {item.Field} = '{item.Value}'";
+      }
+      var result = await _context.Product.FromSql(sql).ToListAsync();
+      if (result.Count > 0)
+        return Ok(result);
+      else
+        return NotFound();
+    }
+
+    [HttpGet("orderBy")]
+    public IActionResult OrderBy([FromQuery] string fields)
+    {
+      try {
+        string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
+                                        .ToArray();
+        var query = _context.Product
+                          .AsNoTracking()
+                          .OrderBy(p => Props.First().GetValue(p));
+
+        int len = Props.Count();
+        for (int i = 0; i < len; i++) {
+          int index = i;
+          query = query.ThenBy(p => Props[index].GetValue(p));
+        }
+
+        return Ok( query.ToList() );
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+      }
+    }
+
     [HttpGet("sql")]
-    public async Task<IActionResult> sql([FromQuery] string sql)
+    public async Task<IActionResult> Sql([FromQuery] string sql)
     {
       try {
         var result = await _context.Product
@@ -171,30 +194,6 @@ namespace AdventureWorks
       if (!ProductExists(id))
         return NotFound();
       return Ok(await _context.Product.FindAsync(id));
-    }
-
-    // GET: api/Products/find?
-    [HttpGet("find")]
-    public async Task<IActionResult> Find([FromQuery] IDictionary<string, string> query)
-    {
-      var filters = query.Select(item => new
-      {
-        Field = item.Key.Substring(0, 1).ToString().ToUpper() + item.Key.Substring(1),
-        Value = item.Value
-      });
-      string sql = "select * from Production.Product";
-      foreach (var item in filters)
-      {
-        if (item.Field == filters.First().Field)
-          sql += $" where {item.Field} = '{item.Value}'";
-        else
-          sql += $" and {item.Field} = '{item.Value}'";
-      }
-      var result = await _context.Product.FromSql(sql).ToListAsync();
-      if (result.Count > 0)
-        return Ok(result);
-      else
-        return NotFound();
     }
 
     // POST: api/Products/add
