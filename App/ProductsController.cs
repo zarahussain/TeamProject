@@ -139,23 +139,52 @@ namespace AdventureWorks
     }
 
     [HttpGet("orderBy")]
-    public IActionResult OrderBy([FromQuery] string fields)
+    public async Task<IActionResult> OrderBy([FromQuery] string fields)
     {
       try {
         string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
-                                        .ToArray();
-        var query = _context.Product
-                          .AsNoTracking()
-                          .OrderBy(p => Props.First().GetValue(p));
+        // hold the Order Dictionary
+        List<KeyValuePair<string,PropertyInfo>> OrderList = new List<KeyValuePair<string,PropertyInfo>>();
+        // hold the first Order
+        KeyValuePair<string,PropertyInfo> OrderItem;
+        // hold the sorting pair
+        string[] pair;
+        // hold the sorting direction
+        string dir = null;
+        // hold the sorting property
+        string prop = null;
 
-        int len = Props.Count();
-        for (int i = 0; i < len; i++) {
+        foreach (var field in _fields) {
+            pair = field.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (pair.Length > 2)
+              throw new ArgumentException(String.Format("Invalid OrderBy string '{0}'. Order By Format: Property, Property2 asc, Property2 desc", field));
+            else {
+              prop = pair[0].Trim();
+              dir = "asc";
+              if (pair.Length == 2)
+                dir = pair[1].Trim();
+            }
+            OrderList.Add(new KeyValuePair<string,PropertyInfo>(dir,typeof(Product).GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)));
+        }
+        //return Ok(OrderList.Select(o => new { Prop = o.Value.Name, Order = o.Key }) );
+        var query = _context.Product.AsNoTracking();
+        OrderItem = OrderList.First();
+        query = (OrderItem.Key == "asc")
+                ? query.OrderBy(p => OrderItem.Value.GetValue(p))
+                : query.OrderByDescending(p => OrderItem.Value.GetValue(p));
+
+        int len = OrderList.Count;
+        for (int i = 1; i < len; i++) {
           int index = i;
-          query = query.ThenBy(p => Props[index].GetValue(p));
+          query = (OrderList[index].Key == "asc")
+                  ? (query as IOrderedQueryable<Product>).ThenBy(p => OrderList[index].Value.GetValue(p))
+                  : (query as IOrderedQueryable<Product>).ThenByDescending(p => OrderList[index].Value.GetValue(p));
         }
 
-        return Ok( query.ToList() );
+        var Result = await query.ToListAsync();
+        var Ordering = OrderList.Select(o => new { Prop = o.Value.Name, Order = o.Key });
+
+        return Ok( new { Ordering, Result} );
       }
       catch (Exception ex) {
         return BadRequest(new { Title = ex.GetType().Name, Error = ex });
