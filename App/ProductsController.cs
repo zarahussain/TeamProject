@@ -157,7 +157,7 @@ namespace AdventureWorks
         foreach (var field in _fields) {
             pair = field.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (pair.Length > 2)
-              throw new ArgumentException(String.Format("Invalid OrderBy string '{0}'. Order By Format: Property, Property2 asc, Property2 desc", field));
+              throw new ArgumentException(String.Format("Invalid OrderBy string: '{0}'. Order By Format: [Property] | [Property asc] | [Property desc]", field.Trim()));
             else {
               prop = pair[0].Trim();
               dir = "asc";
@@ -166,7 +166,7 @@ namespace AdventureWorks
             }
             OrderList.Add(new KeyValuePair<string,PropertyInfo>(dir,typeof(Product).GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)));
         }
-        //return Ok(OrderList.Select(o => new { Prop = o.Value.Name, Order = o.Key }) );
+
         var query = _context.Product.AsNoTracking();
         OrderItem = OrderList.First();
         query = (OrderItem.Key == "asc")
@@ -181,13 +181,12 @@ namespace AdventureWorks
                   : (query as IOrderedQueryable<Product>).ThenByDescending(p => OrderList[index].Value.GetValue(p));
         }
 
-        var Result = await query.ToListAsync();
         var Ordering = OrderList.Select(o => new { Prop = o.Value.Name, Order = o.Key });
-
+        var Result = await query.ToListAsync();
         return Ok( new { Ordering, Result} );
       }
       catch (Exception ex) {
-        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message, Error = ex });
       }
     }
 
