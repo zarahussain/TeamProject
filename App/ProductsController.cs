@@ -1,35 +1,42 @@
 using System;
-using System.Collections.Generic;
 using System.Linq;
+using System.Dynamic;
 using System.Reflection;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Http;
+using System.Linq.Expressions;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.EntityFrameworkCore;
 using System.Linq.Dynamic.Core;
-using System.Dynamic;
+using Microsoft.AspNetCore.Http;
+using System.Collections.Generic;
+using Microsoft.EntityFrameworkCore;
+using System.Text.RegularExpressions;
+using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace AdventureWorks
 {
+  public class Filter
+  {
+    public PropertyInfo Property { get; set; }
+    public string Operator { get; set; }
+    public object Value { get; set; }
+  }
+
   [Route("api/[controller]")]
   public class ProductsController : Controller
   {
-    private readonly AdventureWorksContext _context;
-    public ProductsController(AdventureWorksContext context) =>
-        _context = context;
-    private bool ProductExists(int id) =>
-        _context.Product.Any(e => e.ProductId == id);
+    private readonly AdventureWorksContext _db;
+    public ProductsController(AdventureWorksContext context) => _db = context;
+    private bool ProductExists(int id) => _db.Product.Any(e => e.ProductId == id);
     private async Task<IActionResult> DoAction(Product entity, string actionType)
     {
       if (ModelState.IsValid)
       {
         if (actionType == "Modified")
           entity.ModifiedDate = DateTime.Now;
-        _context.SetState<Product>(entity, actionType);
+        _db.SetState<Product>(entity, actionType);
         try
         {
-          await _context.SaveChangesAsync();
+          await _db.SaveChangesAsync();
           switch (actionType)
           {
             case "Added":
@@ -53,13 +60,40 @@ namespace AdventureWorks
       }
     }
 
+    private Expression<Func<T, bool>> GetExpression<T>(Filter Filter)
+    {
+      switch (Filter.Operator)
+      {
+        case "==":
+          return item => Filter.Property.GetValue(item) == Filter.Value;
+        case "!=":
+          return item => Filter.Property.GetValue(item) != Filter.Value;
+        case ">":
+          return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
+        case "<":
+          return item => (Filter.Property.GetValue(item) as int?) < (Filter.Value as int?);
+        case ">=":
+          return item => (Filter.Property.GetValue(item) as int?) >= (Filter.Value as int?);
+        case "<=":
+          return item => (Filter.Property.GetValue(item) as int?) <= (Filter.Value as int?);
+        case "%":
+          return item => (Filter.Property.GetValue(item) as string).Contains(Filter.Value.ToString());
+        case "=w":
+          return item => Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
+        case "!w":
+          return item => !Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
+        default:
+          return item => Filter.Property.GetValue(item) == Filter.Value;
+      }
+    }
+
     [HttpGet("sort")]
     public async Task<IActionResult> Sort([FromQuery] string orderBy)
     {
       if (String.IsNullOrEmpty(orderBy))
-        return Ok(await _context.Product.ToListAsync());
+        return Ok(await _db.Product.ToListAsync());
       try {
-        var result = await _context.Product
+        var result = await _db.Product
                                 .OrderBy(orderBy)
                                 .ToListAsync();
         return Ok(result);
@@ -81,7 +115,7 @@ namespace AdventureWorks
         IDictionary<string,object> shapped;
         List<IDictionary<string,object>> result = new List<IDictionary<string, object>>();
 
-        foreach (var entity in _context.Product) {
+        foreach (var entity in _db.Product) {
           shapped = new ExpandoObject();
           foreach (var prop in Props)
             shapped.Add(prop.Name,prop.GetValue(entity));
@@ -105,7 +139,7 @@ namespace AdventureWorks
         Field = typeof(Product).GetProperty(item.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
         Value = item.Value
       });
-      var query = _context.Product.AsNoTracking();
+      var query = _db.Product.AsNoTracking();
       foreach (var item in filters)
         query = query.Where(p => item.Field.GetValue(p).ToString() == item.Value);
       var result = await query.ToListAsync();
@@ -131,7 +165,7 @@ namespace AdventureWorks
         else
           sql += $" and {item.Field} = '{item.Value}'";
       }
-      var result = await _context.Product.FromSql(sql).ToListAsync();
+      var result = await _db.Product.FromSql(sql).ToListAsync();
       if (result.Count > 0)
         return Ok(result);
       else
@@ -167,7 +201,7 @@ namespace AdventureWorks
             OrderList.Add(new KeyValuePair<string,PropertyInfo>(dir,typeof(Product).GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)));
         }
 
-        var query = _context.Product.AsNoTracking();
+        var query = _db.Product.AsNoTracking();
         OrderItem = OrderList.First();
         query = (OrderItem.Key == "asc")
                 ? query.OrderBy(p => OrderItem.Value.GetValue(p))
@@ -190,11 +224,46 @@ namespace AdventureWorks
       }
     }
 
+    // GET: api/Products?
+    [HttpGet("where")]
+    public async Task<IActionResult> Where([FromQuery] string filters)
+    {
+      try {
+        string[] _filters = filters.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        // hold the filter 3 parts [Field - Opertor - Value]
+        string[] parts;
+        // hold the filter List Mapped to Filter Object
+        List<Filter> Filters = _filters.Select( filter =>
+        {
+            parts = filter.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3)
+              throw new ArgumentException(String.Format("Invalid Filters string: '{0}'. Filters Format: [Field Opertor Value]", filter.Trim()));
+            return new Filter() {
+              Property = typeof(Product).GetProperty(parts[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
+              Operator = parts[1],
+              Value = parts[2]
+            };
+        }).ToList();
+
+        var query = _db.Product.AsNoTracking();
+        foreach (var item in Filters)
+          query = query.Where(GetExpression<Product>(item));
+
+        var result = await query.ToListAsync();
+        if (result.Count == 0)
+          return NotFound();
+        return Ok(result);
+      }
+      catch (Exception ex) {
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message, Error = ex });
+      }
+    }
+
     [HttpGet("sql")]
     public async Task<IActionResult> Sql([FromQuery] string sql)
     {
       try {
-        var result = await _context.Product
+        var result = await _db.Product
                                 .FromSql(sql)
                                 .ToListAsync();
         return Ok(result);
@@ -207,13 +276,11 @@ namespace AdventureWorks
 
     // GET: api/Products/list
     [HttpGet("list")]
-    public async Task<IActionResult> GetAll() =>
-        Ok(await _context.Product.ToListAsync());
+    public async Task<IActionResult> GetAll() => Ok(await _db.Product.ToListAsync());
 
     // GET: api/Products/page?number=1&size=10
     [HttpGet("page")]
-    public IActionResult GetPaged([FromQuery] Page page) =>
-        Ok(new PagedList<Product>(_context.Product.AsQueryable(), page.number, page.size));
+    public IActionResult GetPaged([FromQuery] Page page) => Ok(new PagedList<Product>(_db.Product.AsQueryable(), page.number, page.size));
 
     // GET: api/Products/5
     [HttpGet("{id}")]
@@ -221,7 +288,7 @@ namespace AdventureWorks
     {
       if (!ProductExists(id))
         return NotFound();
-      return Ok(await _context.Product.FindAsync(id));
+      return Ok(await _db.Product.FindAsync(id));
     }
 
     // POST: api/Products/add
@@ -244,7 +311,7 @@ namespace AdventureWorks
     {
       if (!ProductExists(id))
         return NotFound();
-      var toDelProduct = _context.Product.Find(id);
+      var toDelProduct = _db.Product.Find(id);
       return await DoAction(toDelProduct, "Deleted");
     }
   }
