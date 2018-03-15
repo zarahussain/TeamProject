@@ -60,6 +60,29 @@ namespace AdventureWorks
       }
     }
 
+    private Expression<Func<T, bool>> GetTypedExpression<T>(Filter Filter)
+    {
+      if (Filter.Property.GetType() == typeof(byte))
+        return item => (Filter.Property.GetValue(item) as byte?) > (Filter.Value as byte?);
+      if (Filter.Property.GetType() == typeof(short))
+        return item => (Filter.Property.GetValue(item) as short?) > (Filter.Value as short?);
+      if (Filter.Property.GetType() == typeof(int))
+        return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
+      if (Filter.Property.GetType() == typeof(long))
+        return item => (Filter.Property.GetValue(item) as long?) > (Filter.Value as long?);
+      if (Filter.Property.GetType() == typeof(Single))
+        return item => (Filter.Property.GetValue(item) as Single?) > (Filter.Value as Single?);
+      if (Filter.Property.GetType() == typeof(double))
+        return item => (Filter.Property.GetValue(item) as double?) > (Filter.Value as double?);
+      if (Filter.Property.GetType() == typeof(float))
+        return item => (Filter.Property.GetValue(item) as float?) > (Filter.Value as float?);
+      if (Filter.Property.GetType() == typeof(decimal))
+        return item => (Filter.Property.GetValue(item) as decimal?) > (Filter.Value as decimal?);
+      if (Filter.Property.GetType() == typeof(DateTime))
+        return item => (Filter.Property.GetValue(item) as DateTime?) > (Filter.Value as DateTime?);
+      else
+        return item => false;
+    }
     private Expression<Func<T, bool>> GetExpression<T>(Filter Filter)
     {
       switch (Filter.Operator)
@@ -69,21 +92,97 @@ namespace AdventureWorks
         case "!=":
           return item => Filter.Property.GetValue(item) != Filter.Value;
         case ">":
-          return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(byte))
+            return item => (Filter.Property.GetValue(item) as byte?) > (Filter.Value as byte?);
+          if (Filter.Property.GetType() == typeof(short))
+            return item => (Filter.Property.GetValue(item) as short?) > (Filter.Value as short?);
+          if (Filter.Property.GetType() == typeof(int))
+            return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(long))
+            return item => (Filter.Property.GetValue(item) as long?) > (Filter.Value as long?);
+          if (Filter.Property.GetType() == typeof(Single))
+            return item => (Filter.Property.GetValue(item) as Single?) > (Filter.Value as Single?);
+          if (Filter.Property.GetType() == typeof(double))
+            return item => (Filter.Property.GetValue(item) as double?) > (Filter.Value as double?);
+          if (Filter.Property.GetType() == typeof(float))
+            return item => (Filter.Property.GetValue(item) as float?) > (Filter.Value as float?);
+          if (Filter.Property.GetType() == typeof(decimal))
+            return item => (Filter.Property.GetValue(item) as decimal?) > (Filter.Value as decimal?);
+          if (Filter.Property.GetType() == typeof(DateTime))
+            return item => (Filter.Property.GetValue(item) as DateTime?) > (Filter.Value as DateTime?);
+          else
+            return item => false;
         case "<":
-          return item => (Filter.Property.GetValue(item) as int?) < (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(byte))
+            return item => (Filter.Property.GetValue(item) as byte?) < (Filter.Value as byte?);
+          if (Filter.Property.GetType() == typeof(short))
+            return item => (Filter.Property.GetValue(item) as short?) < (Filter.Value as short?);
+          if (Filter.Property.GetType() == typeof(int))
+            return item => (Filter.Property.GetValue(item) as int?) < (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(long))
+            return item => (Filter.Property.GetValue(item) as long?) < (Filter.Value as long?);
+          if (Filter.Property.GetType() == typeof(Single))
+            return item => (Filter.Property.GetValue(item) as Single?) < (Filter.Value as Single?);
+          if (Filter.Property.GetType() == typeof(double))
+            return item => (Filter.Property.GetValue(item) as double?) < (Filter.Value as double?);
+          if (Filter.Property.GetType() == typeof(float))
+            return item => (Filter.Property.GetValue(item) as float?) < (Filter.Value as float?);
+          if (Filter.Property.GetType() == typeof(decimal))
+            return item => (Filter.Property.GetValue(item) as decimal?) < (Filter.Value as decimal?);
+          if (Filter.Property.GetType() == typeof(DateTime))
+            return item => (Filter.Property.GetValue(item) as DateTime?) < (Filter.Value as DateTime?);
+          else
+            return item => false;
         case ">=":
-          return item => (Filter.Property.GetValue(item) as int?) >= (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(byte))
+            return item => (Filter.Property.GetValue(item) as byte?) >= (Filter.Value as byte?);
+          if (Filter.Property.GetType() == typeof(short))
+            return item => (Filter.Property.GetValue(item) as short?) >= (Filter.Value as short?);
+          if (Filter.Property.GetType() == typeof(int))
+            return item => (Filter.Property.GetValue(item) as int?) >= (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(long))
+            return item => (Filter.Property.GetValue(item) as long?) >= (Filter.Value as long?);
+          if (Filter.Property.GetType() == typeof(Single))
+            return item => (Filter.Property.GetValue(item) as Single?) >= (Filter.Value as Single?);
+          if (Filter.Property.GetType() == typeof(double))
+            return item => (Filter.Property.GetValue(item) as double?) >= (Filter.Value as double?);
+          if (Filter.Property.GetType() == typeof(float))
+            return item => (Filter.Property.GetValue(item) as float?) >= (Filter.Value as float?);
+          if (Filter.Property.GetType() == typeof(decimal))
+            return item => (Filter.Property.GetValue(item) as decimal?) >= (Filter.Value as decimal?);
+          if (Filter.Property.GetType() == typeof(DateTime))
+            return item => (Filter.Property.GetValue(item) as DateTime?) >= (Filter.Value as DateTime?);
+          else
+            return item => false;
         case "<=":
-          return item => (Filter.Property.GetValue(item) as int?) <= (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(byte))
+            return item => (Filter.Property.GetValue(item) as byte?) <= (Filter.Value as byte?);
+          if (Filter.Property.GetType() == typeof(short))
+            return item => (Filter.Property.GetValue(item) as short?) <= (Filter.Value as short?);
+          if (Filter.Property.GetType() == typeof(int))
+            return item => (Filter.Property.GetValue(item) as int?) <= (Filter.Value as int?);
+          if (Filter.Property.GetType() == typeof(long))
+            return item => (Filter.Property.GetValue(item) as long?) <= (Filter.Value as long?);
+          if (Filter.Property.GetType() == typeof(Single))
+            return item => (Filter.Property.GetValue(item) as Single?) <= (Filter.Value as Single?);
+          if (Filter.Property.GetType() == typeof(double))
+            return item => (Filter.Property.GetValue(item) as double?) <= (Filter.Value as double?);
+          if (Filter.Property.GetType() == typeof(float))
+            return item => (Filter.Property.GetValue(item) as float?) <= (Filter.Value as float?);
+          if (Filter.Property.GetType() == typeof(decimal))
+            return item => (Filter.Property.GetValue(item) as decimal?) <= (Filter.Value as decimal?);
+          if (Filter.Property.GetType() == typeof(DateTime))
+            return item => (Filter.Property.GetValue(item) as DateTime?) <= (Filter.Value as DateTime?);
+          else
+            return item => false;
         case "%":
-          return item => (Filter.Property.GetValue(item) as string).Contains(Filter.Value.ToString());
+          return item => Filter.Property.GetValue(item).ToString().Contains(Filter.Value.ToString());
         case "=w":
           return item => Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
         case "!w":
           return item => !Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
         default:
-          return item => Filter.Property.GetValue(item) == Filter.Value;
+          return item => false;
       }
     }
 
@@ -92,13 +191,15 @@ namespace AdventureWorks
     {
       if (String.IsNullOrEmpty(orderBy))
         return Ok(await _db.Product.ToListAsync());
-      try {
+      try
+      {
         var result = await _db.Product
                                 .OrderBy(orderBy)
                                 .ToListAsync();
         return Ok(result);
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
       }
 
@@ -107,25 +208,28 @@ namespace AdventureWorks
     [HttpGet("shapping")]
     public IActionResult shapping([FromQuery] string fields)
     {
-      try {
+      try
+      {
         string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance) )
+        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance))
                                        .ToArray();
 
-        IDictionary<string,object> shapped;
-        List<IDictionary<string,object>> result = new List<IDictionary<string, object>>();
+        IDictionary<string, object> shapped;
+        List<IDictionary<string, object>> result = new List<IDictionary<string, object>>();
 
-        foreach (var entity in _db.Product) {
+        foreach (var entity in _db.Product)
+        {
           shapped = new ExpandoObject();
           foreach (var prop in Props)
-            shapped.Add(prop.Name,prop.GetValue(entity));
+            shapped.Add(prop.Name, prop.GetValue(entity));
 
           result.Add(shapped);
         }
 
-        return Ok( result );
+        return Ok(result);
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         return BadRequest(new { Title = ex.GetType().Name, Error = ex });
       }
     }
@@ -159,7 +263,8 @@ namespace AdventureWorks
         Value = item.Value
       });
       string sql = "select * from Production.Product";
-      foreach (var item in filters) {
+      foreach (var item in filters)
+      {
         if (item.Field == filters.First().Field)
           sql += $" where {item.Field} = '{item.Value}'";
         else
@@ -175,12 +280,13 @@ namespace AdventureWorks
     [HttpGet("orderBy")]
     public async Task<IActionResult> OrderBy([FromQuery] string fields)
     {
-      try {
+      try
+      {
         string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
         // hold the Order Dictionary
-        List<KeyValuePair<string,PropertyInfo>> OrderList = new List<KeyValuePair<string,PropertyInfo>>();
+        List<KeyValuePair<string, PropertyInfo>> OrderList = new List<KeyValuePair<string, PropertyInfo>>();
         // hold the first Order
-        KeyValuePair<string,PropertyInfo> OrderItem;
+        KeyValuePair<string, PropertyInfo> OrderItem;
         // hold the sorting pair
         string[] pair;
         // hold the sorting direction
@@ -188,17 +294,19 @@ namespace AdventureWorks
         // hold the sorting property
         string prop = null;
 
-        foreach (var field in _fields) {
-            pair = field.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (pair.Length > 2)
-              throw new ArgumentException(String.Format("Invalid OrderBy string: '{0}'. Order By Format: [Property] | [Property asc] | [Property desc]", field.Trim()));
-            else {
-              prop = pair[0].Trim();
-              dir = "asc";
-              if (pair.Length == 2)
-                dir = pair[1].Trim();
-            }
-            OrderList.Add(new KeyValuePair<string,PropertyInfo>(dir,typeof(Product).GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)));
+        foreach (var field in _fields)
+        {
+          pair = field.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+          if (pair.Length > 2)
+            throw new ArgumentException(String.Format("Invalid OrderBy string: '{0}'. Order By Format: [Property] | [Property asc] | [Property desc]", field.Trim()));
+          else
+          {
+            prop = pair[0].Trim();
+            dir = "asc";
+            if (pair.Length == 2)
+              dir = pair[1].Trim();
+          }
+          OrderList.Add(new KeyValuePair<string, PropertyInfo>(dir, typeof(Product).GetProperty(prop, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance)));
         }
 
         var query = _db.Product.AsNoTracking();
@@ -208,7 +316,8 @@ namespace AdventureWorks
                 : query.OrderByDescending(p => OrderItem.Value.GetValue(p));
 
         int len = OrderList.Count;
-        for (int i = 1; i < len; i++) {
+        for (int i = 1; i < len; i++)
+        {
           int index = i;
           query = (OrderList[index].Key == "asc")
                   ? (query as IOrderedQueryable<Product>).ThenBy(p => OrderList[index].Value.GetValue(p))
@@ -217,9 +326,10 @@ namespace AdventureWorks
 
         var Ordering = OrderList.Select(o => new { Prop = o.Value.Name, Order = o.Key });
         var Result = await query.ToListAsync();
-        return Ok( new { Ordering, Result} );
+        return Ok(new { Ordering, Result });
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message, Error = ex });
       }
     }
@@ -228,33 +338,36 @@ namespace AdventureWorks
     [HttpGet("where")]
     public async Task<IActionResult> Where([FromQuery] string filters)
     {
-      try {
+      try
+      {
         string[] _filters = filters.Split(',', StringSplitOptions.RemoveEmptyEntries);
         // hold the filter 3 parts [Field - Opertor - Value]
         string[] parts;
         // hold the filter List Mapped to Filter Object
-        List<Filter> Filters = _filters.Select( filter =>
-        {
-            parts = filter.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-            if (parts.Length != 3)
-              throw new ArgumentException(String.Format("Invalid Filters string: '{0}'. Filters Format: [Field Opertor Value]", filter.Trim()));
-            return new Filter() {
-              Property = typeof(Product).GetProperty(parts[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
-              Operator = parts[1],
-              Value = parts[2]
-            };
-        }).ToList();
+        List<Filter> Filters = _filters.Select(filter =>
+       {
+         parts = filter.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+         if (parts.Length != 3)
+           throw new ArgumentException(String.Format("Invalid Filters string: '{0}'. Filters Format: [Field Opertor Value]", filter.Trim()));
+         return new Filter()
+         {
+           Property = typeof(Product).GetProperty(parts[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
+           Operator = parts[1],
+           Value = parts[2]
+         };
+       }).ToList();
 
         var query = _db.Product.AsNoTracking();
-        foreach (var item in Filters)
-          query = query.Where(GetExpression<Product>(item));
+        foreach (Filter filter in Filters)
+          query = query.Where(GetExpression<Product>(filter));
 
         var result = await query.ToListAsync();
         if (result.Count == 0)
           return NotFound();
         return Ok(result);
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message, Error = ex });
       }
     }
@@ -262,13 +375,15 @@ namespace AdventureWorks
     [HttpGet("sql")]
     public async Task<IActionResult> Sql([FromQuery] string sql)
     {
-      try {
+      try
+      {
         var result = await _db.Product
                                 .FromSql(sql)
                                 .ToListAsync();
         return Ok(result);
       }
-      catch (Exception ex) {
+      catch (Exception ex)
+      {
         return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
       }
 
