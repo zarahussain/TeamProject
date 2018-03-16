@@ -59,130 +59,186 @@ namespace AdventureWorks
         return BadRequest(new { Title = "Invalid Data", Error = ModelState });
       }
     }
-
-    private Expression<Func<T, bool>> GetTypedExpression<T>(Filter Filter)
+    private bool GetItem<T>(T item, Filter Filter)
     {
-      if (Filter.Property.GetType() == typeof(byte))
-        return item => (Filter.Property.GetValue(item) as byte?) > (Filter.Value as byte?);
-      if (Filter.Property.GetType() == typeof(short))
-        return item => (Filter.Property.GetValue(item) as short?) > (Filter.Value as short?);
-      if (Filter.Property.GetType() == typeof(int))
-        return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
-      if (Filter.Property.GetType() == typeof(long))
-        return item => (Filter.Property.GetValue(item) as long?) > (Filter.Value as long?);
-      if (Filter.Property.GetType() == typeof(Single))
-        return item => (Filter.Property.GetValue(item) as Single?) > (Filter.Value as Single?);
-      if (Filter.Property.GetType() == typeof(double))
-        return item => (Filter.Property.GetValue(item) as double?) > (Filter.Value as double?);
-      if (Filter.Property.GetType() == typeof(float))
-        return item => (Filter.Property.GetValue(item) as float?) > (Filter.Value as float?);
-      if (Filter.Property.GetType() == typeof(decimal))
-        return item => (Filter.Property.GetValue(item) as decimal?) > (Filter.Value as decimal?);
-      if (Filter.Property.GetType() == typeof(DateTime))
-        return item => (Filter.Property.GetValue(item) as DateTime?) > (Filter.Value as DateTime?);
-      else
-        return item => false;
-    }
-    private Expression<Func<T, bool>> GetExpression<T>(Filter Filter)
-    {
+      Type PropType = Filter.Property.PropertyType;
+      Object PropValue = Filter.Property.GetValue(item);
       switch (Filter.Operator)
       {
         case "==":
-          return item => Filter.Property.GetValue(item) == Filter.Value;
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) == Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) == Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) == Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) == Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) == Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) == Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) == Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) == Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) == Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) == Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) == Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) == Convert.ToDateTime(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.String)
+            return Convert.ToString(PropValue) == Convert.ToString(Filter.Value);
+          else
+            return false;
         case "!=":
-          return item => Filter.Property.GetValue(item) != Filter.Value;
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) != Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) != Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) != Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) != Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) != Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) != Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) != Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) != Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) != Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) != Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) != Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) != Convert.ToDateTime(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.String)
+            return Convert.ToString(PropValue) != Convert.ToString(Filter.Value);            
+          else
+            return false;
         case ">":
-          if (Filter.Property.GetType() == typeof(byte))
-            return item => (Filter.Property.GetValue(item) as byte?) > (Filter.Value as byte?);
-          if (Filter.Property.GetType() == typeof(short))
-            return item => (Filter.Property.GetValue(item) as short?) > (Filter.Value as short?);
-          if (Filter.Property.GetType() == typeof(int))
-            return item => (Filter.Property.GetValue(item) as int?) > (Filter.Value as int?);
-          if (Filter.Property.GetType() == typeof(long))
-            return item => (Filter.Property.GetValue(item) as long?) > (Filter.Value as long?);
-          if (Filter.Property.GetType() == typeof(Single))
-            return item => (Filter.Property.GetValue(item) as Single?) > (Filter.Value as Single?);
-          if (Filter.Property.GetType() == typeof(double))
-            return item => (Filter.Property.GetValue(item) as double?) > (Filter.Value as double?);
-          if (Filter.Property.GetType() == typeof(float))
-            return item => (Filter.Property.GetValue(item) as float?) > (Filter.Value as float?);
-          if (Filter.Property.GetType() == typeof(decimal))
-            return item => (Filter.Property.GetValue(item) as decimal?) > (Filter.Value as decimal?);
-          if (Filter.Property.GetType() == typeof(DateTime))
-            return item => (Filter.Property.GetValue(item) as DateTime?) > (Filter.Value as DateTime?);
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) > Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) > Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) > Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) > Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) > Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) > Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) > Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) > Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) > Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) > Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) > Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) > Convert.ToDateTime(Filter.Value);
           else
-            return item => false;
+            return false;
         case "<":
-          if (Filter.Property.GetType() == typeof(byte))
-            return item => (Filter.Property.GetValue(item) as byte?) < (Filter.Value as byte?);
-          if (Filter.Property.GetType() == typeof(short))
-            return item => (Filter.Property.GetValue(item) as short?) < (Filter.Value as short?);
-          if (Filter.Property.GetType() == typeof(int))
-            return item => (Filter.Property.GetValue(item) as int?) < (Filter.Value as int?);
-          if (Filter.Property.GetType() == typeof(long))
-            return item => (Filter.Property.GetValue(item) as long?) < (Filter.Value as long?);
-          if (Filter.Property.GetType() == typeof(Single))
-            return item => (Filter.Property.GetValue(item) as Single?) < (Filter.Value as Single?);
-          if (Filter.Property.GetType() == typeof(double))
-            return item => (Filter.Property.GetValue(item) as double?) < (Filter.Value as double?);
-          if (Filter.Property.GetType() == typeof(float))
-            return item => (Filter.Property.GetValue(item) as float?) < (Filter.Value as float?);
-          if (Filter.Property.GetType() == typeof(decimal))
-            return item => (Filter.Property.GetValue(item) as decimal?) < (Filter.Value as decimal?);
-          if (Filter.Property.GetType() == typeof(DateTime))
-            return item => (Filter.Property.GetValue(item) as DateTime?) < (Filter.Value as DateTime?);
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) < Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) < Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) < Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) < Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) < Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) < Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) < Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) < Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) < Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) < Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) < Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) < Convert.ToDateTime(Filter.Value);
           else
-            return item => false;
+            return false;
         case ">=":
-          if (Filter.Property.GetType() == typeof(byte))
-            return item => (Filter.Property.GetValue(item) as byte?) >= (Filter.Value as byte?);
-          if (Filter.Property.GetType() == typeof(short))
-            return item => (Filter.Property.GetValue(item) as short?) >= (Filter.Value as short?);
-          if (Filter.Property.GetType() == typeof(int))
-            return item => (Filter.Property.GetValue(item) as int?) >= (Filter.Value as int?);
-          if (Filter.Property.GetType() == typeof(long))
-            return item => (Filter.Property.GetValue(item) as long?) >= (Filter.Value as long?);
-          if (Filter.Property.GetType() == typeof(Single))
-            return item => (Filter.Property.GetValue(item) as Single?) >= (Filter.Value as Single?);
-          if (Filter.Property.GetType() == typeof(double))
-            return item => (Filter.Property.GetValue(item) as double?) >= (Filter.Value as double?);
-          if (Filter.Property.GetType() == typeof(float))
-            return item => (Filter.Property.GetValue(item) as float?) >= (Filter.Value as float?);
-          if (Filter.Property.GetType() == typeof(decimal))
-            return item => (Filter.Property.GetValue(item) as decimal?) >= (Filter.Value as decimal?);
-          if (Filter.Property.GetType() == typeof(DateTime))
-            return item => (Filter.Property.GetValue(item) as DateTime?) >= (Filter.Value as DateTime?);
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) >= Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) >= Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) >= Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) >= Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) >= Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) >= Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) >= Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) >= Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) >= Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) >= Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) >= Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) >= Convert.ToDateTime(Filter.Value);
           else
-            return item => false;
+            return false;
         case "<=":
-          if (Filter.Property.GetType() == typeof(byte))
-            return item => (Filter.Property.GetValue(item) as byte?) <= (Filter.Value as byte?);
-          if (Filter.Property.GetType() == typeof(short))
-            return item => (Filter.Property.GetValue(item) as short?) <= (Filter.Value as short?);
-          if (Filter.Property.GetType() == typeof(int))
-            return item => (Filter.Property.GetValue(item) as int?) <= (Filter.Value as int?);
-          if (Filter.Property.GetType() == typeof(long))
-            return item => (Filter.Property.GetValue(item) as long?) <= (Filter.Value as long?);
-          if (Filter.Property.GetType() == typeof(Single))
-            return item => (Filter.Property.GetValue(item) as Single?) <= (Filter.Value as Single?);
-          if (Filter.Property.GetType() == typeof(double))
-            return item => (Filter.Property.GetValue(item) as double?) <= (Filter.Value as double?);
-          if (Filter.Property.GetType() == typeof(float))
-            return item => (Filter.Property.GetValue(item) as float?) <= (Filter.Value as float?);
-          if (Filter.Property.GetType() == typeof(decimal))
-            return item => (Filter.Property.GetValue(item) as decimal?) <= (Filter.Value as decimal?);
-          if (Filter.Property.GetType() == typeof(DateTime))
-            return item => (Filter.Property.GetValue(item) as DateTime?) <= (Filter.Value as DateTime?);
+          if (Type.GetTypeCode(PropType) == TypeCode.Byte)
+            return Convert.ToByte(PropValue) <= Convert.ToByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.SByte)
+            return Convert.ToSByte(PropValue) <= Convert.ToSByte(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int16)
+            return Convert.ToInt16(PropValue) <= Convert.ToInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt16)
+            return Convert.ToUInt16(PropValue) <= Convert.ToUInt16(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int32)
+            return Convert.ToInt32(PropValue) <= Convert.ToInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt32)
+            return Convert.ToUInt32(PropValue) <= Convert.ToUInt32(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Int64)
+            return Convert.ToInt64(PropValue) <= Convert.ToInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.UInt64)
+            return Convert.ToUInt64(PropValue) <= Convert.ToUInt64(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Single)
+            return Convert.ToSingle(PropValue) <= Convert.ToSingle(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Double)
+            return Convert.ToDouble(PropValue) <= Convert.ToDouble(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.Decimal)
+            return Convert.ToDecimal(PropValue) <= Convert.ToDecimal(Filter.Value);
+          if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
+            return Convert.ToDateTime(PropValue) <= Convert.ToDateTime(Filter.Value);
           else
-            return item => false;
+            return false;
         case "%":
-          return item => Filter.Property.GetValue(item).ToString().Contains(Filter.Value.ToString());
+          return Filter.Property.GetValue(item).ToString().Contains(Filter.Value.ToString());
         case "=w":
-          return item => Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
+          return Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
         case "!w":
-          return item => !Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
+          return !Regex.IsMatch(Filter.Property.GetValue(item).ToString(), string.Format(@"\b{0}\b", Regex.Escape(Filter.Value.ToString())));
         default:
-          return item => false;
+          return false;
       }
     }
 
@@ -210,22 +266,23 @@ namespace AdventureWorks
     {
       try
       {
+        // get the list of fields
         string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        // get the list of Props [using Reflection] based on list of fields
         PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance))
-                                       .ToArray();
-
-        IDictionary<string, object> shapped;
-        List<IDictionary<string, object>> result = new List<IDictionary<string, object>>();
-
-        foreach (var entity in _db.Product)
-        {
-          shapped = new ExpandoObject();
-          foreach (var prop in Props)
-            shapped.Add(prop.Name, prop.GetValue(entity));
-
-          result.Add(shapped);
-        }
-
+                                      .ToArray();
+        // hold one shapped object
+        Dictionary<string, object> shappedObject;
+        // get the list and map it to requested Props
+        var result = _db.Product
+                        .ToList()
+                        .Select(p => {
+                            shappedObject = new Dictionary<string, object>();
+                            foreach (var prop in Props)
+                              shappedObject.Add(prop.Name, prop.GetValue(p));
+                            return shappedObject;
+                        });
+        // returning the result
         return Ok(result);
       }
       catch (Exception ex)
@@ -345,21 +402,24 @@ namespace AdventureWorks
         string[] parts;
         // hold the filter List Mapped to Filter Object
         List<Filter> Filters = _filters.Select(filter =>
-       {
-         parts = filter.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
-         if (parts.Length != 3)
-           throw new ArgumentException(String.Format("Invalid Filters string: '{0}'. Filters Format: [Field Opertor Value]", filter.Trim()));
-         return new Filter()
-         {
-           Property = typeof(Product).GetProperty(parts[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
-           Operator = parts[1],
-           Value = parts[2]
-         };
-       }).ToList();
+          {
+            parts = filter.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
+            if (parts.Length != 3)
+              throw new ArgumentException(String.Format("Invalid Filters string: '{0}'. Filters Format: [Field Opertor Value]", filter.Trim()));
+            return new Filter()
+            {
+              Property = typeof(Product).GetProperty(parts[0], BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
+              Operator = parts[1],
+              Value = parts[2]
+            };
+          }).ToList();
+
+      //  return Ok(Filters.Select(f => Type.GetTypeCode(f.Property.PropertyType))
+      //                   .ToList());
 
         var query = _db.Product.AsNoTracking();
         foreach (Filter filter in Filters)
-          query = query.Where(GetExpression<Product>(filter));
+          query = query.Where(p => GetItem<Product>(p, filter));
 
         var result = await query.ToListAsync();
         if (result.Count == 0)
