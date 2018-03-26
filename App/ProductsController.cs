@@ -61,7 +61,7 @@ namespace AdventureWorks
     }
     private bool GetItem<T>(T item, Filter Filter)
     {
-      Type PropType = Filter.Property.PropertyType;
+      Type PropType = Nullable.GetUnderlyingType(Filter.Property.PropertyType) ?? Filter.Property.PropertyType;
       Object PropValue = Filter.Property.GetValue(item);
       switch (Filter.Operator)
       {
@@ -120,7 +120,7 @@ namespace AdventureWorks
           if (Type.GetTypeCode(PropType) == TypeCode.DateTime)
             return Convert.ToDateTime(PropValue) != Convert.ToDateTime(Filter.Value);
           if (Type.GetTypeCode(PropType) == TypeCode.String)
-            return Convert.ToString(PropValue) != Convert.ToString(Filter.Value);            
+            return Convert.ToString(PropValue) != Convert.ToString(Filter.Value);
           else
             return false;
         case ">":
@@ -242,74 +242,6 @@ namespace AdventureWorks
       }
     }
 
-    [HttpGet("sort")]
-    public async Task<IActionResult> Sort([FromQuery] string orderBy)
-    {
-      if (String.IsNullOrEmpty(orderBy))
-        return Ok(await _db.Product.ToListAsync());
-      try
-      {
-        var result = await _db.Product
-                                .OrderBy(orderBy)
-                                .ToListAsync();
-        return Ok(result);
-      }
-      catch (Exception ex)
-      {
-        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
-      }
-
-    }
-
-    [HttpGet("shapping")]
-    public IActionResult shapping([FromQuery] string fields)
-    {
-      try
-      {
-        // get the list of fields
-        string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
-        // get the list of Props [using Reflection] based on list of fields
-        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance))
-                                      .ToArray();
-        // hold one shapped object
-        Dictionary<string, object> shappedObject;
-        // get the list and map it to requested Props
-        var result = _db.Product
-                        .ToList()
-                        .Select(p => {
-                            shappedObject = new Dictionary<string, object>();
-                            foreach (var prop in Props)
-                              shappedObject.Add(prop.Name, prop.GetValue(p));
-                            return shappedObject;
-                        });
-        // returning the result
-        return Ok(result);
-      }
-      catch (Exception ex)
-      {
-        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
-      }
-    }
-
-    // GET: api/Products?
-    [HttpGet("filter")]
-    public async Task<IActionResult> Filter([FromQuery] IDictionary<string, string> qStr)
-    {
-      var filters = qStr.Select(item => new
-      {
-        Field = typeof(Product).GetProperty(item.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
-        Value = item.Value
-      });
-      var query = _db.Product.AsNoTracking();
-      foreach (var item in filters)
-        query = query.Where(p => item.Field.GetValue(p).ToString() == item.Value);
-      var result = await query.ToListAsync();
-      if (result.Count > 0)
-        return Ok(result);
-      else
-        return NotFound();
-    }
-
     // GET: api/Products/find?
     [HttpGet("find")]
     public async Task<IActionResult> Find([FromQuery] IDictionary<string, string> query)
@@ -332,6 +264,44 @@ namespace AdventureWorks
         return Ok(result);
       else
         return NotFound();
+    }
+
+    // GET: api/Products?
+    [HttpGet("filter")]
+    public async Task<IActionResult> Filter([FromQuery] IDictionary<string, string> qStr)
+    {
+      var filters = qStr.Select(item => new
+      {
+        Field = typeof(Product).GetProperty(item.Key, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance),
+        Value = item.Value
+      });
+      var query = _db.Product.AsNoTracking();
+      foreach (var item in filters)
+        query = query.Where(p => item.Field.GetValue(p).ToString() == item.Value);
+      var result = await query.ToListAsync();
+      if (result.Count > 0)
+        return Ok(result);
+      else
+        return NotFound();
+    }
+
+    [HttpGet("sort")]
+    public async Task<IActionResult> Sort([FromQuery] string orderBy)
+    {
+      if (String.IsNullOrEmpty(orderBy))
+        return Ok(await _db.Product.ToListAsync());
+      try
+      {
+        var result = await _db.Product
+                                .OrderBy(orderBy)
+                                .ToListAsync();
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message });
+      }
+
     }
 
     [HttpGet("orderBy")]
@@ -390,6 +360,52 @@ namespace AdventureWorks
         return BadRequest(new { Title = ex.GetType().Name, Message = ex.Message, Error = ex });
       }
     }
+    // select all data from SQL Server and then shapping it dynamically using Reflection
+    [HttpGet("shapping")]
+    public IActionResult Shapping([FromQuery] string fields)
+    {
+      try
+      {
+        // get the list of fields
+        string[] _fields = fields.Split(',', StringSplitOptions.RemoveEmptyEntries);
+        // get the list of Props [using Reflection] based on list of fields
+        PropertyInfo[] Props = _fields.Select(field => typeof(Product).GetProperty(field.Trim(), BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance))
+                                      .ToArray();
+        // hold one shapped object
+        Dictionary<string, object> shappedObject;
+        // get the list and map it to requested Props
+        var result = _db.Product
+                        .ToList()
+                        .Select(p => {
+                            shappedObject = new Dictionary<string, object>();
+                            foreach (var prop in Props)
+                              shappedObject.Add(prop.Name.ToCamel(), prop.GetValue(p));
+                            return shappedObject;
+                        });
+        // returning the result
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+      }
+    }
+    // select only desired fields from SQL Server using Dynamic Linq
+    [HttpGet("select")]
+    public IActionResult Select([FromQuery] string fields)
+    {
+      try
+      {
+        // get the list and map it to requested Props
+        var result = _db.Product.Select($"new({fields})");
+        // returning the result
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new { Title = ex.GetType().Name, Error = ex });
+      }
+    }
 
     // GET: api/Products?
     [HttpGet("where")]
@@ -413,9 +429,6 @@ namespace AdventureWorks
               Value = parts[2]
             };
           }).ToList();
-
-      //  return Ok(Filters.Select(f => Type.GetTypeCode(f.Property.PropertyType))
-      //                   .ToList());
 
         var query = _db.Product.AsNoTracking();
         foreach (Filter filter in Filters)

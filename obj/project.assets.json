@@ -13305,11 +13305,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "g:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\AdventureWorks.csproj",
+      "projectUniqueName": "G:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\AdventureWorks.csproj",
       "projectName": "AdventureWorks",
-      "projectPath": "g:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\AdventureWorks.csproj",
+      "projectPath": "G:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\AdventureWorks.csproj",
       "packagesPath": "C:\\Users\\Ahmady\\.nuget\\packages\\",
-      "outputPath": "g:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\obj\\",
+      "outputPath": "G:\\4-Developer.Work\\ASP Net Core 2.0\\AdventureWorks\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"

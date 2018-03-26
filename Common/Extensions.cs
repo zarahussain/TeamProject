@@ -9,6 +9,40 @@ namespace AdventureWorks
 {
   public static class Extensions
   {
+    // To Pascal Case
+    public static string ToPascal(this string prop)
+    {
+      if (string.IsNullOrEmpty(prop))
+        return prop;
+      return prop.Substring(0, 1).ToUpper() + prop.Substring(1);
+    }
+    public static string ToCamel(this string prop)
+    {
+      if (string.IsNullOrEmpty(prop))
+        return prop;
+      return prop.Substring(0, 1).ToLower() + prop.Substring(1);
+    }
+    // Set the Entity State
+    public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
+    {
+      EntityState state;
+      switch (_state)
+      {
+        case "Added":
+          state = EntityState.Added;
+          break;
+        case "Modified":
+          state = EntityState.Modified;
+          break;
+        case "Deleted":
+          state = EntityState.Deleted;
+          break;
+        default:
+          state = EntityState.Unchanged;
+          break;
+      }
+      context.Entry(entity).State = state;
+    }
     // failed to handle async and sotring
     public static IQueryable<T> Sort<T>(this IQueryable<T> query, string sort)
     {
@@ -56,26 +90,6 @@ namespace AdventureWorks
       }
 
       return query;
-    }
-    public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
-    {
-      EntityState state;
-      switch (_state)
-      {
-        case "Added":
-          state = EntityState.Added;
-          break;
-        case "Modified":
-          state = EntityState.Modified;
-          break;
-        case "Deleted":
-          state = EntityState.Deleted;
-          break;
-        default:
-          state = EntityState.Unchanged;
-          break;
-      }
-      context.Entry(entity).State = state;
     }
   }
 }
