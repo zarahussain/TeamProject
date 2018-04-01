@@ -280,7 +280,7 @@ namespace AdventureWorks
         query = query.Where(p => item.Field.GetValue(p).ToString() == item.Value);
       var result = await query.ToListAsync();
       if (result.Count > 0)
-        return Ok(result);
+        return Ok(new {result = result, sql = query.ToSql()});
       else
         return NotFound();
     }
