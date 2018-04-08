@@ -9,11 +9,12 @@ using System.Threading.Tasks;
 
 namespace AdventureWorks
 {
-  public class AdvSearch {
+  public class Query {
     public string SqlTableName { get; set; }
     public string KeyPropName { get; set; }
     public PropertyInfo KeyProp { get; set; }
-    public List<string> QuerableFields { get; set; }
+    public List<string> FiltersFields { get; set; }
+    public List<string> SearchFields { get; set; }
   }
   public class Response {
     public string Title { get; set; }
@@ -25,24 +26,24 @@ namespace AdventureWorks
           where TDbContext : DbContext
   {
     private readonly TDbContext _db;
-    private readonly AdvSearch _advSearch;
+    private readonly Query _query;
     private IEnumerable<dynamic> _filters;
     private TEntity found;
     private PropertyInfo _modifiedDateProp;
     private string _sqlQuery;
 
-    public APIController(TDbContext dbContext, AdvSearch advSearch)
+    public APIController(TDbContext dbContext, Query query)
     {
       _db = dbContext;
-      _advSearch = advSearch;
-      _advSearch.KeyProp = typeof(TEntity).GetProperty(_advSearch.KeyPropName);
+      _query = query;
+      _query.KeyProp = typeof(TEntity).GetProperty(_query.KeyPropName);
     }
 
-    private bool FieldExists(string FieldName) => _advSearch.QuerableFields.Any(q => q == FieldName);
+    private bool _FieldExists(string FieldName) => _query.FiltersFields.Any(q => q == FieldName);
 
-    private async Task<TEntity> Find(Tkey id) => await _db.Set<TEntity>()
+    private async Task<TEntity> _Find(Tkey id) => await _db.Set<TEntity>()
                         .AsNoTracking()
-                        .FirstOrDefaultAsync(e => _advSearch.KeyProp.GetValue(e).Equals(id));
+                        .FirstOrDefaultAsync(e => _query.KeyProp.GetValue(e).Equals(id));
     private void SetState(TEntity entity, string _state)
     {
       EntityState state;
@@ -75,12 +76,12 @@ namespace AdventureWorks
           await _db.SaveChangesAsync();
           switch (actionType) {
             case "Added":
-              return Created($"api/Products/{_advSearch.KeyProp.GetValue(entity)}", entity);
+              return Created($"api/Products/{_query.KeyProp.GetValue(entity)}", entity);
             case "Modified":
               return Ok(entity);
             case "Deleted":
               return Ok(new Response { Title = "Success: Deleting",
-                                       Message = $"Item with Id: {_advSearch.KeyProp.GetValue(entity)} Was Deleted From DB" });
+                                       Message = $"Item with Id: {_query.KeyProp.GetValue(entity)} Was Deleted From DB" });
             default:
               return NoContent();
           }
@@ -100,19 +101,18 @@ namespace AdventureWorks
     public async Task<IActionResult> GetAll() =>
         Ok(await _db.Set<TEntity>().AsNoTracking().ToListAsync());
 
+    [HttpGet("page")]
+    public IActionResult GetPage([FromQuery] Page page) =>
+                Ok(new PagedList<TEntity>(_db.Set<TEntity>().AsNoTracking(), page.number, page.size));
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById([FromRoute] Tkey id)
     {
-      found = await Find(id);
+      found = await _Find(id);
       if (found == null)
         return NotFound();
       return Ok(found);
     }
-
-    [HttpGet("page")]
-    public IActionResult GetPaged([FromQuery] Page page) =>
-                Ok(new PagedList<TEntity>(_db.Set<TEntity>().AsNoTracking(), page.number, page.size));
-
     [HttpGet("find")]
     public async Task<IActionResult> Find([FromQuery] IDictionary<string, string> query)
     {
@@ -122,12 +122,12 @@ namespace AdventureWorks
         Value = item.Value
       });
       // filter out any not querable fields
-      _filters = _filters.Where(f => FieldExists(f.Field));
+      _filters = _filters.Where(f => _FieldExists(f.Field));
       // if no remaining fields return badrequest
       if (_filters.Count() == 0)
         return BadRequest(new { Title = "Invalid QueryString Keys", Error = query });
       // set the base select statement
-      _sqlQuery = $"select * from {_advSearch.SqlTableName}";
+      _sqlQuery = $"select * from {_query.SqlTableName}";
       // build the where clause
       foreach (var item in _filters) {
         if (item.Field == _filters.First().Field)
@@ -141,12 +141,10 @@ namespace AdventureWorks
                          .FromSql(_sqlQuery)
                          .ToListAsync();
       // return the appropriate result
-      if (result.Count > 0)
-        return Ok(result);
-      else
+      if (result.Count == 0)
         return NotFound();
+      return Ok(result);
     }
-
     [HttpPost("add")]
     public async Task<IActionResult> Add([FromBody] TEntity newProduct)
     {
@@ -162,7 +160,7 @@ namespace AdventureWorks
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete([FromRoute] Tkey id)
     {
-      found = await Find(id);
+      found = await _Find(id);
       if (found == null)
         return NotFound();
       return await DoAction(found, "Deleted");

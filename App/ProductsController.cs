@@ -27,7 +27,12 @@ namespace AdventureWorks
     private readonly AdventureWorksContext _db;
     public ProductsController(AdventureWorksContext context) => _db = context;
     private bool ProductExists(int id) => _db.Product.Any(e => e.ProductId == id);
-    private async Task<IActionResult> DoAction(Product entity, string actionType)
+
+    private async Task<Product> _Find(int id)
+    {
+      return await _db.Product.FindAsync(id);
+    }
+    private async Task<IActionResult> _DoAction(Product entity, string actionType)
     {
       if (ModelState.IsValid)
       {
@@ -280,7 +285,7 @@ namespace AdventureWorks
         query = query.Where(p => item.Field.GetValue(p).ToString() == item.Value);
       var result = await query.ToListAsync();
       if (result.Count > 0)
-        return Ok(new {result = result, sql = query.ToSql()});
+        return Ok(new { result = result, sql = query.ToSql() });
       else
         return NotFound();
     }
@@ -376,11 +381,12 @@ namespace AdventureWorks
         // get the list and map it to requested Props
         var result = _db.Product
                         .ToList()
-                        .Select(p => {
-                            shappedObject = new Dictionary<string, object>();
-                            foreach (var prop in Props)
-                              shappedObject.Add(prop.Name.ToCamel(), prop.GetValue(p));
-                            return shappedObject;
+                        .Select(p =>
+                        {
+                          shappedObject = new Dictionary<string, object>();
+                          foreach (var prop in Props)
+                            shappedObject.Add(prop.Name.ToCamel(), prop.GetValue(p));
+                          return shappedObject;
                         });
         // returning the result
         return Ok(result);
@@ -474,33 +480,34 @@ namespace AdventureWorks
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById([FromRoute] int id)
     {
-      if (!ProductExists(id))
-        return NotFound();
-      return Ok(await _db.Product.FindAsync(id));
+      var product = await _Find(id);
+      if (product == null)
+        return BadRequest("There is no Product with this Id");
+      return Ok(product);
     }
 
     // POST: api/Products/add
     [HttpPost("add")]
     public async Task<IActionResult> Add([FromBody] Product newProduct)
     {
-      return await DoAction(newProduct, "Added");
+      return await _DoAction(newProduct, "Added");
     }
 
     // POST: api/Products/update
     [HttpPut("update")]
     public async Task<IActionResult> Update([FromBody] Product updProduct)
     {
-      return await DoAction(updProduct, "Modified");
+      return await _DoAction(updProduct, "Modified");
     }
 
     // POST: api/Products/delete
     [HttpDelete("delete/{id}")]
     public async Task<IActionResult> Delete([FromRoute] int id)
     {
-      if (!ProductExists(id))
-        return NotFound();
-      var toDelProduct = _db.Product.Find(id);
-      return await DoAction(toDelProduct, "Deleted");
+      var product = await _Find(id);
+      if (product == null)
+        return BadRequest("There is no Product with this Id");
+      return await _DoAction(product, "Deleted");
     }
   }
 }

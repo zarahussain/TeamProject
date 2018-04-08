@@ -6,10 +6,10 @@ namespace AdventureWorks
     [Route("api/[controller]")]
     public class CustomersController : APIController<int, Customer, AdventureWorksContext>
     {
-        private static AdvSearch advSearch = new AdvSearch() {
+        private static Query advSearch = new Query() {
             SqlTableName = "Sales.Customer",
             KeyPropName = "CustomerId",
-            QuerableFields = new List<string>() {
+            FiltersFields = new List<string>() {
                     "CustomerID",
                     "TerritoryID",
                     "AccountNumber",
