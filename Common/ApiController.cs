@@ -1,5 +1,6 @@
 using System;
 using System.Linq;
+using System.Linq.Dynamic.Core;
 using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
@@ -9,14 +10,16 @@ using System.Threading.Tasks;
 
 namespace AdventureWorks
 {
-  public class Query {
+  public class Query
+  {
     public string SqlTableName { get; set; }
     public string KeyPropName { get; set; }
     public PropertyInfo KeyProp { get; set; }
     public List<string> FiltersFields { get; set; }
     public List<string> SearchFields { get; set; }
   }
-  public class Response {
+  public class Response
+  {
     public string Title { get; set; }
     public object Message { get; set; }
   }
@@ -44,10 +47,11 @@ namespace AdventureWorks
     private async Task<TEntity> _Find(Tkey id) => await _db.Set<TEntity>()
                         .AsNoTracking()
                         .FirstOrDefaultAsync(e => _query.KeyProp.GetValue(e).Equals(id));
-    private void SetState(TEntity entity, string _state)
+    private void _SetState(TEntity entity, string _state)
     {
       EntityState state;
-      switch (_state) {
+      switch (_state)
+      {
         case "Added":
           state = EntityState.Added;
           break;
@@ -63,38 +67,217 @@ namespace AdventureWorks
       }
       _db.Entry(entity).State = state;
     }
-    private async Task<IActionResult> DoAction(TEntity entity, string actionType)
+    private async Task<IActionResult> _DoAction(TEntity entity, string actionType)
     {
-      if (ModelState.IsValid) {
-        if (actionType == "Modified") {
+      if (ModelState.IsValid)
+      {
+        if (actionType == "Modified")
+        {
           _modifiedDateProp = typeof(TEntity).GetProperty("ModifiedDate");
           if (_modifiedDateProp != null)
             _modifiedDateProp.SetValue(entity, DateTime.Now);
         }
-        SetState(entity, actionType);
-        try {
+        _SetState(entity, actionType);
+        try
+        {
           await _db.SaveChangesAsync();
-          switch (actionType) {
+          switch (actionType)
+          {
             case "Added":
               return Created($"api/Products/{_query.KeyProp.GetValue(entity)}", entity);
             case "Modified":
               return Ok(entity);
             case "Deleted":
-              return Ok(new Response { Title = "Success: Deleting",
-                                       Message = $"Item with Id: {_query.KeyProp.GetValue(entity)} Was Deleted From DB" });
+              return Ok(new Response
+              {
+                Title = "Success: Deleting",
+                Message = $"Item with Id: {_query.KeyProp.GetValue(entity)} Was Deleted From DB"
+              });
             default:
               return NoContent();
           }
         }
-        catch (Exception ex) {
-          return BadRequest(new Response {  Title = "Error: SqlException",
-                                            Message = ex.InnerException.Message });
+        catch (Exception ex)
+        {
+          return BadRequest(new Response
+          {
+            Title = "Error: SqlException",
+            Message = ex.InnerException.Message
+          });
         }
       }
-      else {
-        return BadRequest(new Response {  Title = "Error: Invalid Data",
-                                          Message = ModelState });
+      else
+      {
+        return BadRequest(new Response
+        {
+          Title = "Error: Invalid Data",
+          Message = ModelState
+        });
       }
+    }
+
+    // takes array of filters (each : field|operator|value)
+    // and generates the conditions of the sql where clause
+    // build one condition
+    private string _GetCondition(string[] filter, string prefix)
+    {
+      string _field = filter[0].Trim();
+      string _operator = filter[1].Trim();
+      string _value = filter[2].Trim();
+
+      var prop = typeof(TEntity).GetProperty(_field, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+      //if field not found or null , return emtpy string
+      if (prop == null)
+        return "";
+      var propertyType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+      TypeCode typeCode = System.Type.GetTypeCode(propertyType);
+      switch (typeCode)
+      {
+        case TypeCode.Boolean:
+          switch (_operator)
+          {
+            case "=":
+              return $"{prefix} {_field} = {_value} ";
+            case "!=":
+              return $"{prefix} {_field} != {_value} ";
+            default:
+              return "";
+          }
+        case TypeCode.String:
+          switch (_operator)
+          {
+            case "=":
+              return $"{prefix} {_field} = '{_value}' ";
+            case "!=":
+              return $"{prefix} {_field} != '{_value}' ";
+            case "%":
+              return $"{prefix} {_field} like '%{_value}%' ";
+            case "@":
+              return $"{prefix} CONTAINS({_field} , '{_value}') ";
+            default:
+              return "";
+          }
+        case TypeCode.Byte:
+        case TypeCode.SByte:
+        case TypeCode.UInt16:
+        case TypeCode.UInt32:
+        case TypeCode.UInt64:
+        case TypeCode.Int16:
+        case TypeCode.Int32:
+        case TypeCode.Int64:
+        case TypeCode.Single:
+        case TypeCode.Double:
+        case TypeCode.Decimal:
+          switch (_operator)
+          {
+            case "=":
+              return $"{prefix} {_field} = {_value} ";
+            case "!=":
+              return $"{prefix} {_field} != {_value} ";
+            case ">":
+              return $"{prefix} {_field} > {_value} ";
+            case "<":
+              return $"{prefix} {_field} < {_value} ";
+            case ">=":
+              return $"{prefix} {_field} >= {_value} ";
+            case "<=":
+              return $"{prefix} {_field} <= {_value} ";
+            default:
+              return "";
+          }
+        case TypeCode.DateTime:
+          switch (_operator)
+          {
+            case "=":
+              return $"{prefix} {_field} = '{_value}' ";
+            case "!=":
+              return $"{prefix} {_field} != '{_value}' ";
+            case ">":
+              return $"{prefix} {_field} > '{_value}' ";
+            case "<":
+              return $"{prefix} {_field} < '{_value}' ";
+            case ">=":
+              return $"{prefix} {_field} >= '{_value}' ";
+            case "<=":
+              return $"{prefix} {_field} <= '{_value}' ";
+            default:
+              return "";
+          }
+        default:
+          return "";
+      }
+    }
+    // takes string filters comma separated values (each : field|operator|value)
+    // clean it and get string list of filters
+    // bass it to _GetCondition one by one
+    // so it builds the whole sql where clause
+    public IQueryable<TEntity> _ApplySqlWhere(string filters, string tableName)
+    {
+      //split filters and add every filter as an item in an array
+      string[] filtersArr = filters.SplitAndRemoveEmpty(',');
+      //list to hold every filter as an arry with 3 item
+      List<string[]> filtersList = filtersArr.Select(item => item.SplitAndRemoveEmpty('|'))
+                                             .ToList();
+
+      _sqlQuery = $"select * from {tableName} ";
+      foreach (var filter in filtersList)
+        _sqlQuery += (filtersList.First() == filter)
+                        ? _GetCondition(filter, "where")
+                        : _GetCondition(filter, "and");
+      //use no tracking so that db context won't track changes on this dbset
+      //better performance than AsQueriable -- used in read only queries
+      return _db.Set<TEntity>()
+                .AsNoTracking()
+                .FromSql(_sqlQuery);
+    }
+
+    // applying dynamic filter using sql where clause
+    [HttpGet("where")]
+    public IActionResult SqlWhere([FromQuery] string filters)
+    {
+      try
+      {
+        var res = _ApplySqlWhere(filters, _query.SqlTableName);
+        return Ok(res);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new Response { Title = ex.GetType().Name, Message = ex });
+      }
+    }
+
+    // select only desired fields from SQL Server using Dynamic Linq
+    [HttpGet("select")]
+    public IActionResult Select([FromQuery] string fields)
+    {
+      try
+      {
+        var result = _db.Set<TEntity>().Select($"new({fields})");
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new Response { Title = ex.GetType().Name, Message = ex });
+      }
+    }
+    // Appling Sql like orderBy clause using Dynamic Linq
+    [HttpGet("sort")]
+    public async Task<IActionResult> Sort([FromQuery] string orderBy)
+    {
+      if (String.IsNullOrEmpty(orderBy.Trim()))
+        return Ok(await _db.Set<TEntity>().ToListAsync());
+      try
+      {
+        var result = await _db.Set<TEntity>()
+                              .OrderBy(orderBy)
+                              .ToListAsync();
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new Response { Title = ex.GetType().Name, Message = ex.Message });
+      }
+
     }
 
     [HttpGet("list")]
@@ -117,7 +300,8 @@ namespace AdventureWorks
     public async Task<IActionResult> Find([FromQuery] IDictionary<string, string> query)
     {
       // capitalize the first letter of the field
-      _filters = query.Select(item => new {
+      _filters = query.Select(item => new
+      {
         Field = item.Key.Substring(0, 1).ToString().ToUpper() + item.Key.Substring(1),
         Value = item.Value
       });
@@ -129,7 +313,8 @@ namespace AdventureWorks
       // set the base select statement
       _sqlQuery = $"select * from {_query.SqlTableName}";
       // build the where clause
-      foreach (var item in _filters) {
+      foreach (var item in _filters)
+      {
         if (item.Field == _filters.First().Field)
           _sqlQuery += $" where {item.Field} = '{item.Value}'";
         else
@@ -148,13 +333,13 @@ namespace AdventureWorks
     [HttpPost("add")]
     public async Task<IActionResult> Add([FromBody] TEntity newProduct)
     {
-      return await DoAction(newProduct, "Added");
+      return await _DoAction(newProduct, "Added");
     }
 
     [HttpPut("update")]
     public async Task<IActionResult> Update([FromBody] TEntity updProduct)
     {
-      return await DoAction(updProduct, "Modified");
+      return await _DoAction(updProduct, "Modified");
     }
 
     [HttpDelete("delete/{id}")]
@@ -163,7 +348,7 @@ namespace AdventureWorks
       found = await _Find(id);
       if (found == null)
         return NotFound();
-      return await DoAction(found, "Deleted");
+      return await _DoAction(found, "Deleted");
     }
 
   } // end class APIController

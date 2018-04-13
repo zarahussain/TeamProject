@@ -27,11 +27,7 @@ namespace AdventureWorks
     private readonly AdventureWorksContext _db;
     public ProductsController(AdventureWorksContext context) => _db = context;
     private bool ProductExists(int id) => _db.Product.Any(e => e.ProductId == id);
-
-    private async Task<Product> _Find(int id)
-    {
-      return await _db.Product.FindAsync(id);
-    }
+    private async Task<Product> _Find(int id) => await _db.Product.FindAsync(id);
     private async Task<IActionResult> _DoAction(Product entity, string actionType)
     {
       if (ModelState.IsValid)

@@ -38,6 +38,35 @@ namespace AdventureWorks
       return modelVisitor.Queries.First().ToString();
     }
     #endregion
+    // takes a string that contains list of values seperated by a separator,
+    // removes any empty elements (white spaces or empty strings)
+    // return the clean string
+    public static string RemoveEmptyValues(this string str, Char separator)
+    {
+      // convert comma separated list to array so that we can remove empty items
+      string[] strArr = str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+      //Remove empty items from array using where() [filter]
+      //and trim each element using select() [map]
+      strArr = strArr.Where(item => !string.IsNullOrWhiteSpace(item))
+                      .Select(item => item.Trim())
+                      .ToArray();
+      //convert fieldsArr array to a string with separator
+      return string.Join(separator, strArr);
+    }
+    // takes a string that contains list of values seperated by a separator,
+    // removes any empty elements (white spaces or empty strings)
+    // return the clean string array
+    public static string[] SplitAndRemoveEmpty(this string str, Char separator)
+    {
+      // convert string to array so that we can remove empty items
+      string[] strArr = str.Split(separator, StringSplitOptions.RemoveEmptyEntries);
+      // Remove empty items from array using where()
+      // and trim each element using select()
+      // then return it
+      return strArr.Where(item => !string.IsNullOrWhiteSpace(item))
+                      .Select(item => item.Trim())
+                      .ToArray();
+    }
     // To Pascal Case
     public static string ToPascal(this string prop)
     {
