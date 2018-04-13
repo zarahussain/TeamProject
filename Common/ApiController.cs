@@ -231,6 +231,34 @@ namespace AdventureWorks
                 .FromSql(_sqlQuery);
     }
 
+    // filtering only on a specific [string] field(s) using contains operator
+    [HttpGet("search")]
+    public async Task<IActionResult> Search([FromQuery] string query)
+    {
+      if (String.IsNullOrEmpty(query.Trim()))
+        return BadRequest(new Response { Title = "Invalid search term", Message = "must specify query parameter ..." });
+      try
+      {
+        // set the base select statement
+        _sqlQuery = $"select * from {_query.SqlTableName}";
+        // build the where clause
+        foreach (var field in _query.SearchFields)
+          _sqlQuery += (field == _query.SearchFields.First())
+                        ? $" where {field} like '%{query}%'"
+                        : $" or {field} like '%{query}%'";
+        // execute the query
+        var result = await _db.Set<TEntity>()
+                           .AsNoTracking()
+                           .FromSql(_sqlQuery)
+                           .ToListAsync();
+        // return the result
+        return Ok(result);
+      }
+      catch (Exception ex)
+      {
+        return BadRequest(new Response { Title = ex.GetType().Name, Message = ex });
+      }
+    }
     // applying dynamic filter using sql where clause
     [HttpGet("where")]
     public IActionResult SqlWhere([FromQuery] string filters)
