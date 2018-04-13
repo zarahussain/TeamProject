@@ -81,6 +81,102 @@ namespace AdventureWorks
         return prop;
       return prop.Substring(0, 1).ToLower() + prop.Substring(1);
     }
+
+    // an extension method attached to object [it can be used within any object]
+    // takes a property name which we want to get its PropertyInfo useing reflection
+    public static PropertyInfo GetProperty(this object obj, string propName)
+    {
+      return obj.GetType()
+              .GetProperty(propName, BindingFlags.IgnoreCase | BindingFlags.Public | BindingFlags.Instance);
+    }
+    // an extension method attached to object [it can be used within any object]
+    // takes a property name which we want to get its value
+    // so we use reflection to get the property value based on its name at runtime
+    public static object GetValue(this object obj, string propName)
+    {
+      // get the property info
+      var prop = obj.GetProperty(propName.Trim());
+      // if there is no such property on that type then return null
+      if (prop == null)
+        return null;
+      // else return the value
+      return prop.GetValue(obj);
+    }
+    // an extension method attached to object [it can be used within any object]
+    // takes a [property name] which we want to sets its value and a [value]
+    // so we use reflection to [set] the property value based on its [name] and [type] at runtime
+    public static void SetValue(this object obj, string propName, object value)
+    {
+      // get the property info
+      var prop = obj.GetProperty(propName);
+      // if there is no such property on that type then do nothing
+      if (prop == null)
+        return;
+      // else do the following
+      // check if the type is nullable
+      // if so return its underlying type
+      // if not, return its type
+      var propertyType = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+      // get the TypeCode enum from the property type
+      TypeCode typeCode = System.Type.GetTypeCode(propertyType);
+      // switch on typeCode and Set the Value
+      switch (typeCode)
+      {
+        case TypeCode.Boolean:
+          prop.SetValue(obj, Convert.ToBoolean(value), null);
+          break;
+        case TypeCode.String:
+          prop.SetValue(obj, Convert.ToString(value), null);
+          break;
+        case TypeCode.Byte:
+          prop.SetValue(obj, Convert.ToByte(value), null);
+          break;
+        case TypeCode.SByte:
+          prop.SetValue(obj, Convert.ToSByte(value), null);
+          break;
+        case TypeCode.UInt16:
+          prop.SetValue(obj, Convert.ToUInt16(value), null);
+          break;
+        case TypeCode.UInt32:
+          prop.SetValue(obj, Convert.ToUInt32(value), null);
+          break;
+        case TypeCode.UInt64:
+          prop.SetValue(obj, Convert.ToUInt64(value), null);
+          break;
+        case TypeCode.Int16:
+          prop.SetValue(obj, Convert.ToInt16(value), null);
+          break;
+        case TypeCode.Int32:
+          prop.SetValue(obj, Convert.ToInt32(value), null);
+          break;
+        case TypeCode.Int64:
+          prop.SetValue(obj, Convert.ToInt64(value), null);
+          break;
+        case TypeCode.Single:
+          prop.SetValue(obj, Convert.ToSingle(value), null);
+          break;
+        case TypeCode.Double:
+          prop.SetValue(obj, Convert.ToDouble(value), null);
+          break;
+        case TypeCode.Decimal:
+          prop.SetValue(obj, Convert.ToDecimal(value), null);
+          break;
+        case TypeCode.DateTime:
+          prop.SetValue(obj, Convert.ToDateTime(value), null);
+          break;
+        case TypeCode.Object:
+          if (prop.PropertyType == typeof(Guid) || prop.PropertyType == typeof(Guid?))
+          {
+            prop.SetValue(obj, Guid.Parse(value.ToString()), null);
+            return;
+          }
+          prop.SetValue(obj, value, null);
+          break;
+        default:
+          prop.SetValue(obj, value, null);
+          break;
+      }
+    }
     // Set the Entity State
     public static void SetState<T>(this AdventureWorksContext context, T entity, string _state) where T : class
     {
